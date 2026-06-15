@@ -55,6 +55,12 @@ function setupEventListeners() {
             e.target.classList.add('active');
             currentCategoryFilter = e.target.dataset.category;
             renderLocomotives();
+    // Añade esto dentro de setupEventListeners
+const mobileSelect = document.getElementById('mobileCategorySelect');
+mobileSelect.addEventListener('change', (e) => {
+    currentCategoryFilter = e.target.value;
+    renderLocomotives(); // Llama a tu función de renderizado existente
+});
         }
     });
 
