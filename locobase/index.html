@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LocoBase - Gestión de Locomotoras</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚂</text></svg>">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -46,21 +47,27 @@
                 <button class="tab" data-category="Locomotora Diesel">Locomotora Diesel</button>
                 <button class="tab" data-category="Locomotora de Vapor">Locomotora de Vapor</button>
             </div>
-            <select id="mobileCategorySelect" class="mobile-category-select">
-                <option value="all">Todas</option>
-                <option value="Locomotora Eléctrica">Locomotora Eléctrica</option>
-                <option value="Locomotora Diesel">Locomotora Diesel</option>
-            </select>
+
+            <div class="categories-mobile-select">
+                <select id="categorySelectMobile">
+                    <option value="all">Todas las categorías</option>
+                    <option value="Automotor Eléctrico">Automotor Eléctrico</option>
+                    <option value="Automotor Diesel">Automotor Diesel</option>
+                    <option value="Locomotora Eléctrica">Locomotora Eléctrica</option>
+                    <option value="Locomotora Diesel">Locomotora Diesel</option>
+                    <option value="Locomotora de Vapor">Locomotora de Vapor</option>
+                </select>
+            </div>
             
             <button id="addLocoBtn" class="btn success hidden">
-                <span class="material-icons-round">add</span> Añadir Máquina
+                <span class="material-icons-round">add</span> <span class="btn-text">Añadir Máquina</span>
             </button>
         </section>
 
         <section class="grid-container" id="locoGrid"></section>
     </main>
 
-    <div id="soundListModal" class="modal hidden">
+    <div id="soundListModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="soundModalTitle">Lista de Sonidos</h3>
@@ -85,7 +92,7 @@
         </div>
     </div>
 
-    <div id="locoModal" class="modal hidden">
+    <div id="locoModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Nueva Locomotora</h3>
@@ -113,13 +120,13 @@
                 <div class="form-group">
                     <label for="locoImg">Foto de la máquina</label>
                     <input type="file" id="locoImg" accept="image/*">
-                    <div id="imgPreviewContainer" class="hidden" style="height: 180px;">
-                      <img id="imgPreview" src="" alt="Vista previa" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div id="imgPreviewContainer" class="hidden">
+                        <img id="imgPreview" src="" alt="Vista previa">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="locoSoundText">Lista de Sonidos Rápida (Línea por línea. Ej: F1: Motor)</label>
+                    <label for="locoSoundText">Lista de Sonidos (Formato rápido - Ej. F1: Silbato)</label>
                     <textarea id="locoSoundText" rows="4" placeholder="F1: Sonido motor&#10;F2: Silbato" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border); background-color:var(--bg-main); color:var(--text-main); font-family:inherit; resize:vertical; outline: none;"></textarea>
                 </div>
 
@@ -143,7 +150,7 @@
         </div>
     </div>
 
-    <div id="loginModal" class="modal hidden">
+    <div id="loginModal" class="modal">
         <div class="modal-content small-modal">
             <div class="modal-header">
                 <h3>Acceso Administración</h3>
