@@ -517,3 +517,9 @@ body {
     .form-actions { flex-direction: column-reverse; }
     .form-actions .btn { width: 100%; justify-content: center; }
 }
+/* Forzar que el texto del botón no se rompa */
+.btn-sounds {
+    white-space: nowrap;
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+}
