@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocoBase - Gestión de Locomotoras</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="material-icons-round">train</span>
+                <h1>Loco<span>Base</span></h1>
+            </div>
+            
+            <div class="search-box">
+                <span class="material-icons-round">search</span>
+                <input type="text" id="searchInput" placeholder="Buscar locomotora por nombre...">
+            </div>
+
+            <div class="nav-actions">
+                <button id="themeToggle" class="btn-icon">
+                    <span class="material-icons-round" id="themeIcon">dark_mode</span>
+                </button>
+                <button id="loginBtn" class="btn primary">
+                    <span class="material-icons-round">lock</span> <span class="btn-text">Modificar</span>
+                </button>
+                <button id="logoutBtn" class="btn danger hidden">
+                    <span class="material-icons-round">logout</span> <span class="btn-text">Salir</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="controls-section">
+            <div class="categories-tabs" id="categoryFilters">
+                <button class="tab active" data-category="all">Todas</button>
+                <button class="tab" data-category="Automotor Eléctrico">Automotor Eléctrico</button>
+                <button class="tab" data-category="Automotor Diesel">Automotor Diesel</button>
+                <button class="tab" data-category="Locomotora Eléctrica">Locomotora Eléctrica</button>
+                <button class="tab" data-category="Locomotora Diesel">Locomotora Diesel</button>
+                <button class="tab" data-category="Locomotora de Vapor">Locomotora de Vapor</button>
+            </div>
+            
+            <button id="addLocoBtn" class="btn success hidden">
+                <span class="material-icons-round">add</span> Añadir Máquina
+            </button>
+        </section>
+
+        <section class="grid-container" id="locoGrid"></section>
+    </main>
+
+    <div id="soundListModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="soundModalTitle">Lista de Sonidos</h3>
+                <span class="close-modal" onclick="cerrarModal('soundListModal')">&times;</span>
+            </div>
+            <div class="sound-modal-body">
+                <div id="pdfLinkContainer" class="hidden" style="margin-bottom: 1.2rem;">
+                    <button id="viewPdfBtn" class="btn" style="background-color: #475569; color: white; width: 100%; justify-content: center;">
+                        <span class="material-icons-round">picture_as_pdf</span> Ver Manual en PDF Completo
+                    </button>
+                </div>
+                <table class="sound-table">
+                    <thead>
+                        <tr>
+                            <th>Función</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="soundTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="locoModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nueva Locomotora</h3>
+                <span class="close-modal" onclick="cerrarModal('locoModal')">&times;</span>
+            </div>
+            <form id="locoForm">
+                <input type="hidden" id="locoId">
+                
+                <div class="form-group">
+                    <label for="locoName">Nombre de la Locomotora *</label>
+                    <input type="text" id="locoName" required placeholder="Ej. Renfe 252">
+                </div>
+
+                <div class="form-group">
+                    <label for="locoCategory">Categoría *</label>
+                    <select id="locoCategory" required>
+                        <option value="Automotor Eléctrico">Automotor Eléctrico</option>
+                        <option value="Automotor Diesel">Automotor Diesel</option>
+                        <option value="Locomotora Eléctrica">Locomotora Eléctrica</option>
+                        <option value="Locomotora Diesel">Locomotora Diesel</option>
+                        <option value="Locomotora de Vapor">Locomotora de Vapor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="locoImg">Foto de la máquina</label>
+                    <input type="file" id="locoImg" accept="image/*">
+                    <div id="imgPreviewContainer" class="hidden" style="height: 180px;">
+                      <img id="imgPreview" src="" alt="Vista previa" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="locoSoundText">Lista de Sonidos Rápida (Línea por línea. Ej: F1: Motor)</label>
+                    <textarea id="locoSoundText" rows="4" placeholder="F1: Sonido motor&#10;F2: Silbato" style="width:100%; padding:0.6rem; border-radius:6px; border:1px solid var(--border); background-color:var(--bg-main); color:var(--text-main); font-family:inherit; resize:vertical; outline: none;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="locoSoundPdf">Adjuntar Manual PDF original</label>
+                    <input type="file" id="locoSoundPdf" accept=".pdf">
+                    <span id="pdfFileStatus" class="file-status"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="locoZ21">Archivo de configuración Z21</label>
+                    <input type="file" id="locoZ21">
+                    <span id="z21FileStatus" class="file-status"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="deleteLocoBtn" class="btn danger hidden">Eliminar Locomotora</button>
+                    <button type="submit" class="btn primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal hidden">
+        <div class="modal-content small-modal">
+            <div class="modal-header">
+                <h3>Acceso Administración</h3>
+                <span class="close-modal" onclick="cerrarModal('loginModal')">&times;</span>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Usuario</label>
+                    <input type="text" id="username" required placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <p id="loginError" class="error-msg hidden">Credenciales incorrectas</p>
+                <button type="submit" class="btn primary full-width">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
