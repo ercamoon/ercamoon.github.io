@@ -1,9 +1,26 @@
+// --- AUTO-CIERRE DE SEGURIDAD AL REFRESCAR / INICIAR ---
+// Borramos cualquier rastro de token de Supabase en el almacenamiento local 
+// para asegurar que al refrescar la pantalla la sesión esté 100% destruida.
+for (let key in localStorage) {
+    if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+    }
+}
+sessionStorage.clear(); // Limpiamos también el almacenamiento de la pestaña
+
 // --- CONFIGURACIÓN DE CONEXIÓN A SUPABASE ---
 const SUPABASE_URL = "https://qdgvablwuebyzdkzodsl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkZ3ZhYmx3dWVieXpka3pvZHNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NzI1MDcsImV4cCI6MjA5NzA0ODUwN30.ADE0dnQNxgdDLG-VCYxWSW3-YhV1x4mAL_kWWq7s6sg";
 const S_DOMAIN = "@loco.com";
 
-supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Configuramos el cliente con almacenamiento en sessionStorage para máxima volatilidad
+supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        storage: window.sessionStorage,
+        persistSession: false, // Desactivamos por completo que intente recordar al usuario
+        autoRefreshToken: false // Evitamos que refresque el token en segundo plano
+    }
+});
 
 // --- ESTADO GLOBAL ---
 let locomotives = [];
@@ -28,7 +45,9 @@ let fileImg = null, filePdf = null, fileZ21 = null;
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     setupEventListeners();
-    await checkExistingSession(); 
+    // Forzamos que empiece siempre como sesión nula (cerrada)
+    currentSession = null;
+    setAdminUI(false);
     await fetchLocomotives();     
 });
 
@@ -52,7 +71,6 @@ function setupEventListeners() {
             e.target.classList.add('active');
             currentCategoryFilter = e.target.dataset.category;
             
-            // Sincronizamos el select del móvil
             const mobileSelect = document.getElementById('categorySelectMobile');
             if(mobileSelect) mobileSelect.value = currentCategoryFilter;
 
@@ -66,7 +84,6 @@ function setupEventListeners() {
         mobileSelect.addEventListener('change', (e) => {
             currentCategoryFilter = e.target.value;
             
-            // Sincronizamos las pestañas de ordenador
             document.querySelectorAll('.tab').forEach(t => {
                 if (t.dataset.category === currentCategoryFilter) t.classList.add('active');
                 else t.classList.remove('active');
@@ -130,17 +147,19 @@ function setupEventListeners() {
         if(fileZ21) document.getElementById('z21FileStatus').innerText = `Listo: ${fileZ21.name}`;
     });
 
-    // BOTÓN ELIMINAR CON DIAGNÓSTICO INTEGRADO
+    // BOTÓN ELIMINAR DEFINITIVO Y LIMPIO
     document.getElementById('deleteLocoBtn').addEventListener('click', async () => {
-        const id = document.getElementById('locoId').value;
+        const idRaw = document.getElementById('locoId').value;
         
-        if(!id) {
-            alert("Error: El formulario no tiene ningún ID cargado. No se puede determinar el tren a borrar.");
+        if(!idRaw) {
+            alert("Error: El formulario no tiene ningún ID cargado.");
             return;
         }
         
+        const idNumeric = parseInt(idRaw);
+        
         if(confirm("¿Estás seguro de eliminar esta locomotora y TODOS sus archivos de la nube?")) {
-            const loco = locomotives.find(l => String(l.id) === String(id));
+            const loco = locomotives.find(l => parseInt(l.id) === idNumeric);
             
             if (loco) {
                 const archivosABorrar = [];
@@ -160,8 +179,10 @@ function setupEventListeners() {
                 }
             }
 
-            // Forzamos el borrado pasándole el ID exacto como texto/número flexible
-            const { error, status } = await supabase.from('locomotives').delete().eq('id', id);
+            const { error } = await supabase
+                .from('locomotives')
+                .delete()
+                .eq('id', idNumeric);
 
             if (error) {
                 alert("Supabase ha rechazado el borrado:\nCódigo: " + error.code + "\nMensaje: " + error.message);
@@ -169,7 +190,8 @@ function setupEventListeners() {
             }
 
             alert("¡Tren eliminado correctamente de la nube!");
-            locomotives = locomotives.filter(l => String(l.id) !== String(id));
+
+            locomotives = locomotives.filter(l => parseInt(l.id) !== idNumeric);
             renderLocomotives();
             cerrarModal('locoModal');
         }
@@ -181,17 +203,16 @@ async function fetchLocomotives() {
         isLoadingDatabase = true;
         renderLocomotives(); 
         
-        // Cabeceras añadidas para saltarse cualquier posible caché del navegador
         const { data, error } = await supabase
             .from('locomotives')
             .select('*')
-            .order('created_at', { ascending: false })
-            .headers({'cache-control': 'no-cache, no-store, must-revalidate'});
+            .order('created_at', { ascending: false });
 
         if (error) throw error;
         locomotives = data || [];
     } catch (err) {
         console.error("Error cargando base de datos:", err.message);
+        alert("Error al leer la base de datos: " + err.message);
     } finally {
         isLoadingDatabase = false; 
         renderLocomotives(); 
@@ -334,32 +355,38 @@ async function handleLocoSubmit(e) {
     const category = document.getElementById('locoCategory').value;
     const sounds = document.getElementById('locoSoundText').value;
 
-    const imgUrl = fileImg ? await uploadToStorage(fileImg, 'images') : (id ? locomotives.find(l=>String(l.id)===String(id)).image_url : null);
-    const pdfUrl = filePdf ? await uploadToStorage(filePdf, 'manuals') : (id ? locomotives.find(l=>String(l.id)===String(id)).pdf_url : null);
-    const z21Url = fileZ21 ? await uploadToStorage(fileZ21, 'z21') : (id ? locomotives.find(l=>String(l.id)===String(id)).z21_url : null);
+    try {
+        const imgUrl = fileImg ? await uploadToStorage(fileImg, 'images') : (id ? locomotives.find(l=>String(l.id)===String(id)).image_url : null);
+        const pdfUrl = filePdf ? await uploadToStorage(filePdf, 'manuals') : (id ? locomotives.find(l=>String(l.id)===String(id)).pdf_url : null);
+        const z21Url = fileZ21 ? await uploadToStorage(fileZ21, 'z21') : (id ? locomotives.find(l=>String(l.id)===String(id)).z21_url : null);
 
-    const locoData = { name, category, sounds, image_url: imgUrl, pdf_url: pdfUrl, z21_url: z21Url };
+        const locoData = { name, category, sounds, image_url: imgUrl, pdf_url: pdfUrl, z21_url: z21Url };
 
-    let result;
-    if(id && id !== "") {
-        result = await supabase.from('locomotives').update(locoData).eq('id', parseInt(id));
-        if (!result.error) {
+        let result;
+        
+        if(id && id !== "") {
+            result = await supabase.from('locomotives').update(locoData).eq('id', parseInt(id));
+            if (result.error) throw result.error;
+            
             const index = locomotives.findIndex(l => parseInt(l.id) === parseInt(id));
             if (index !== -1) locomotives[index] = { ...locomotives[index], ...locoData };
             alert("¡Locomotora modificada correctamente!");
+            
+        } else {
+            result = await supabase.from('locomotives').insert([locoData]).select();
+            if (result.error) throw result.error;
+            
+            if (result.data && result.data.length > 0) {
+                locomotives.unshift(result.data[0]);
+                alert("¡Nueva locomotora añadida correctamente!");
+            }
         }
-    } else {
-        result = await supabase.from('locomotives').insert([locoData]).select();
-        if (!result.error && result.data && result.data.length > 0) {
-            locomotives.unshift(result.data[0]);
-            alert("¡Nueva locomotora añadida correctamente!");
-        }
-    }
 
-    if (result.error) alert("Error guardando datos: " + result.error.message);
-    else {
         renderLocomotives();
         cerrarModal('locoModal');
+
+    } catch (error) {
+        alert("¡Error al guardar!\n\nMensaje: " + error.message);
     }
 }
 
@@ -416,17 +443,6 @@ async function handleLogout() {
     await supabase.auth.signOut();
     currentSession = null;
     setAdminUI(false);
-}
-
-async function checkExistingSession() {
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        currentSession = session;
-        setAdminUI(!!session);
-    } catch {
-        currentSession = null;
-        setAdminUI(false);
-    }
 }
 
 function setAdminUI(logged) {
