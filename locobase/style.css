@@ -523,3 +523,23 @@ body {
     padding: 0.55rem 1rem;
     font-size: 0.85rem;
 }
+
+/* Ocultamos el select en escritorio */
+.mobile-category-select { display: none; }
+
+@media (max-width: 600px) {
+    /* Ocultamos los botones en móvil */
+    .categories-tabs { display: none; }
+    
+    /* Mostramos y centramos el select */
+    .mobile-category-select {
+        display: block;
+        width: 80%;
+        margin: 10px auto; /* Centrado */
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        background: white;
+        font-size: 16px;
+    }
+}
