@@ -5,12 +5,13 @@ const S_DOMAIN = "@loco.com";
 
 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- ESTADO ---
+// --- ESTADO GLOBAL ---
 let locomotives = [];
 let currentCategoryFilter = "all";
 let currentSession = null;
+let isLoadingDatabase = true; 
 
-// --- SELECTORES DOM ---
+// --- ELEMENTOS DOM ---
 const locoGrid = document.getElementById('locoGrid');
 const searchInput = document.getElementById('searchInput');
 const categoryFilters = document.getElementById('categoryFilters');
@@ -31,38 +32,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     await fetchLocomotives();     
 });
 
-// NUEVA LÓGICA CON CLASES DE ANIMACIÓN
 function mostrarModal(idModal) {
     const modal = document.getElementById(idModal);
-    if(modal) {
-        modal.classList.add('show');
-    }
+    if(modal) modal.classList.add('show');
 }
 
 function cerrarModal(idModal) {
     const modal = document.getElementById(idModal);
-    if(modal) {
-        modal.classList.remove('show');
-    }
+    if(modal) modal.classList.remove('show');
 }
 
 function setupEventListeners() {
     searchInput.addEventListener('input', renderLocomotives);
     
+    // Escucha de filtros - Versión Escritorio
     categoryFilters.addEventListener('click', (e) => {
         if(e.target.classList.contains('tab')) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             e.target.classList.add('active');
             currentCategoryFilter = e.target.dataset.category;
+            
+            // Sincronizamos el select del móvil
+            const mobileSelect = document.getElementById('categorySelectMobile');
+            if(mobileSelect) mobileSelect.value = currentCategoryFilter;
+
             renderLocomotives();
-    // Añade esto dentro de setupEventListeners
-const mobileSelect = document.getElementById('mobileCategorySelect');
-mobileSelect.addEventListener('change', (e) => {
-    currentCategoryFilter = e.target.value;
-    renderLocomotives(); // Llama a tu función de renderizado existente
-});
         }
     });
+
+    // Escucha de filtros - Versión Móvil (Select Desplegable)
+    const mobileSelect = document.getElementById('categorySelectMobile');
+    if (mobileSelect) {
+        mobileSelect.addEventListener('change', (e) => {
+            currentCategoryFilter = e.target.value;
+            
+            // Sincronizamos las pestañas de ordenador
+            document.querySelectorAll('.tab').forEach(t => {
+                if (t.dataset.category === currentCategoryFilter) t.classList.add('active');
+                else t.classList.remove('active');
+            });
+            
+            renderLocomotives();
+        });
+    }
 
     themeToggle.addEventListener('click', toggleTheme);
     loginBtn.addEventListener('click', () => mostrarModal('loginModal'));
@@ -72,7 +84,6 @@ mobileSelect.addEventListener('change', (e) => {
     locoForm.addEventListener('submit', handleLocoSubmit);
     logoutBtn.addEventListener('click', handleLogout);
 
-    // ESCUCHA DE CLICS DE LA REJILLA
     locoGrid.addEventListener('click', (e) => {
         const editBtn = e.target.closest('.edit-badge');
         if (editBtn) {
@@ -97,11 +108,8 @@ mobileSelect.addEventListener('change', (e) => {
         }
     });
 
-    // CERRAR AUTOMÁTICAMENTE AL PULSAR EN EL FONDO OSCURO OUTSIDE
     window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            cerrarModal(e.target.id);
-        }
+        if (e.target.classList.contains('modal')) cerrarModal(e.target.id);
     });
 
     document.getElementById('locoImg').addEventListener('change', (e) => {
@@ -122,32 +130,87 @@ mobileSelect.addEventListener('change', (e) => {
         if(fileZ21) document.getElementById('z21FileStatus').innerText = `Listo: ${fileZ21.name}`;
     });
 
+    // BOTÓN ELIMINAR CON DIAGNÓSTICO INTEGRADO
     document.getElementById('deleteLocoBtn').addEventListener('click', async () => {
         const id = document.getElementById('locoId').value;
-        if(id && confirm("¿Estás seguro de eliminar esta locomotora de la nube?")) {
-            const { error } = await supabase.from('locomotives').delete().eq('id', parseInt(id));
-            if (error) alert("Error al borrar: " + error.message);
-            else {
-                await fetchLocomotives();
-                cerrarModal('locoModal');
+        
+        if(!id) {
+            alert("Error: El formulario no tiene ningún ID cargado. No se puede determinar el tren a borrar.");
+            return;
+        }
+        
+        if(confirm("¿Estás seguro de eliminar esta locomotora y TODOS sus archivos de la nube?")) {
+            const loco = locomotives.find(l => String(l.id) === String(id));
+            
+            if (loco) {
+                const archivosABorrar = [];
+                const obtenerRutaStorage = (url) => {
+                    if (!url) return null;
+                    const partes = url.split('/locobase-media/');
+                    return partes.length > 1 ? partes[1] : null;
+                };
+
+                if (loco.image_url) { const ruta = obtenerRutaStorage(loco.image_url); if(ruta) archivosABorrar.push(ruta); }
+                if (loco.pdf_url) { const ruta = obtenerRutaStorage(loco.pdf_url); if(ruta) archivosABorrar.push(ruta); }
+                if (loco.z21_url) { const ruta = obtenerRutaStorage(loco.z21_url); if(ruta) archivosABorrar.push(ruta); }
+
+                if (archivosABorrar.length > 0) {
+                    const { error: storageError } = await supabase.storage.from('locobase-media').remove(archivosABorrar);
+                    if (storageError) console.warn("Aviso en Storage:", storageError.message);
+                }
             }
+
+            // Forzamos el borrado pasándole el ID exacto como texto/número flexible
+            const { error, status } = await supabase.from('locomotives').delete().eq('id', id);
+
+            if (error) {
+                alert("Supabase ha rechazado el borrado:\nCódigo: " + error.code + "\nMensaje: " + error.message);
+                return;
+            }
+
+            alert("¡Tren eliminado correctamente de la nube!");
+            locomotives = locomotives.filter(l => String(l.id) !== String(id));
+            renderLocomotives();
+            cerrarModal('locoModal');
         }
     });
 }
 
 async function fetchLocomotives() {
     try {
-        const { data, error } = await supabase.from('locomotives').select('*').order('created_at', { ascending: false });
+        isLoadingDatabase = true;
+        renderLocomotives(); 
+        
+        // Cabeceras añadidas para saltarse cualquier posible caché del navegador
+        const { data, error } = await supabase
+            .from('locomotives')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .headers({'cache-control': 'no-cache, no-store, must-revalidate'});
+
         if (error) throw error;
         locomotives = data || [];
-        renderLocomotives();
     } catch (err) {
         console.error("Error cargando base de datos:", err.message);
+    } finally {
+        isLoadingDatabase = false; 
+        renderLocomotives(); 
     }
 }
 
 function renderLocomotives() {
     locoGrid.innerHTML = "";
+
+    if (isLoadingDatabase) {
+        locoGrid.innerHTML = `
+            <div class="loading-box">
+                <div class="loading-spinner"></div>
+                <p style="font-weight: 600; font-size: 1.1rem; margin-top: 0.5rem;">Cargando colección de locomotoras...</p>
+                <p style="font-size: 0.85rem; opacity: 0.7;">Conectando de forma segura con la nube de Supabase</p>
+            </div>`;
+        return;
+    }
+
     const query = searchInput.value.toLowerCase().trim();
     const isUserAdmin = currentSession !== null;
 
@@ -158,7 +221,7 @@ function renderLocomotives() {
     });
 
     if(filtered.length === 0) {
-        locoGrid.innerHTML = `<p class="text-muted" style="grid-column: 1/-1; text-align:center; padding: 3rem;">No hay locomotoras registradas en la nube.</p>`;
+        locoGrid.innerHTML = `<div class="status-msg"><p class="text-muted">No se ha encontrado ninguna locomotora registrada.</p></div>`;
         return;
     }
 
@@ -186,7 +249,7 @@ function renderLocomotives() {
                 <h4>${loco.name}</h4>
                 <div class="card-actions">
                     <button class="btn primary btn-sounds" data-id="${loco.id}">
-                        <span class="material-icons-round">volume_up</span> Lista de sonidos
+                        <span class="material-icons-round">volume_up</span> Sonidos
                     </button>
                     <button class="btn success btn-download-z21" data-url="${loco.z21_url || '#'}" data-filename="${cleanZ21Name}" style="${!loco.z21_url ? 'opacity:0.4; cursor:not-allowed; pointer-events:none;' : ''}">
                         <span class="material-icons-round">download</span> Z21
@@ -258,10 +321,8 @@ async function uploadToStorage(file, folder) {
     const filePath = `${folder}/${shortRandom}_${file.name}`; 
 
     const { error } = await supabase.storage.from('locobase-media').upload(filePath, file, { cacheControl: '3600', upsert: true });
-    if (error) {
-        console.error("Error al subir archivo:", error.message);
-        return null;
-    }
+    if (error) return null;
+    
     const { data } = supabase.storage.from('locobase-media').getPublicUrl(filePath);
     return data.publicUrl;
 }
@@ -280,15 +341,24 @@ async function handleLocoSubmit(e) {
     const locoData = { name, category, sounds, image_url: imgUrl, pdf_url: pdfUrl, z21_url: z21Url };
 
     let result;
-    if(id) {
+    if(id && id !== "") {
         result = await supabase.from('locomotives').update(locoData).eq('id', parseInt(id));
+        if (!result.error) {
+            const index = locomotives.findIndex(l => parseInt(l.id) === parseInt(id));
+            if (index !== -1) locomotives[index] = { ...locomotives[index], ...locoData };
+            alert("¡Locomotora modificada correctamente!");
+        }
     } else {
-        result = await supabase.from('locomotives').insert([locoData]);
+        result = await supabase.from('locomotives').insert([locoData]).select();
+        if (!result.error && result.data && result.data.length > 0) {
+            locomotives.unshift(result.data[0]);
+            alert("¡Nueva locomotora añadida correctamente!");
+        }
     }
 
     if (result.error) alert("Error guardando datos: " + result.error.message);
     else {
-        await fetchLocomotives();
+        renderLocomotives();
         cerrarModal('locoModal');
     }
 }
@@ -372,7 +442,6 @@ function setAdminUI(logged) {
     renderLocomotives();
 }
 
-// --- MANEJO DEL TEMA (OSCURO / CLARO) ---
 function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
