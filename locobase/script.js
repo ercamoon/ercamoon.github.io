@@ -272,9 +272,11 @@ function renderLocomotives() {
                     <button class="btn primary btn-sounds" data-id="${loco.id}">
                         <span class="material-icons-round">volume_up</span> Sonidos
                     </button>
-                    <button class="btn success btn-download-z21" data-url="${loco.z21_url || '#'}" data-filename="${cleanZ21Name}" style="${!loco.z21_url ? 'opacity:0.4; cursor:not-allowed; pointer-events:none;' : ''}">
+                    ${loco.z21_url ? `
+                    <button class="btn success btn-download-z21" data-url="${loco.z21_url}" data-filename="${cleanZ21Name}">
                         <span class="material-icons-round">download</span> Z21
                     </button>
+                    ` : ''}
                 </div>
             </div>
         `;
