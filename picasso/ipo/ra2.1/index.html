@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Conceptual - Prevenció de Riscos Laborals (PRL)</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #1e3a8a;
+      --secondary: #2563eb;
+      --accent-1: #059669;
+      --accent-2: #d97706;
+      --accent-3: #dc2626;
+      --accent-4: #7c3aed;
+      --text-main: #1f2937;
+      --text-muted: #4b5563;
+      --border: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 30px 20px;
+      line-height: 1.5;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      color: var(--primary);
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .tree-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Core Node */
+    .main-node {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      text-align: center;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      margin-bottom: 40px;
+    }
+
+    /* Concept Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 25px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      border-top: 5px solid var(--secondary);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .card.c-salut { border-color: #10b981; }
+    .card.c-basics { border-color: #3b82f6; }
+    .card.c-espais { border-color: #f59e0b; }
+    .card.c-fisics { border-color: #8b5cf6; }
+    .card.c-quimics { border-color: #ef4444; }
+    .card.c-ergonomics { border-color: #ec4899; }
+    .card.c-danys { border-color: #6366f1; }
+
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card.c-salut h2 { color: #059669; }
+    .card.c-basics h2 { color: #2563eb; }
+    .card.c-espais h2 { color: #d97706; }
+    .card.c-fisics h2 { color: #7c3aed; }
+    .card.c-quimics h2 { color: #dc2626; }
+    .card.c-ergonomics h2 { color: #db2777; }
+    .card.c-danys h2 { color: #4f46e5; }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    li {
+      margin-bottom: 10px;
+      padding-left: 15px;
+      position: relative;
+    }
+
+    li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+      font-weight: bold;
+    }
+
+    .sub-list {
+      margin-top: 5px;
+      margin-left: 10px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .sub-list li::before {
+      content: "▫";
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: #e0e7ff;
+      color: #3730a3;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      margin-left: 5px;
+    }
+
+    .legal-tag {
+      font-size: 0.8rem;
+      color: #6b7280;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Prevenció de Riscos Laborals (PRL)</h1>
+    <p>Mapa Conceptual interactiu de la presentació de Seguretat i Salut</p>
+  </header>
+
+  <div class="tree-container">
+    <div class="main-node">
+      PREVENCIÓ DE RISCOS LABORALS (PRL)
+      <div style="font-size: 0.9rem; font-weight: normal; margin-top: 5px;">
+        Conjunt d'accions i mesures per evitar o reduir els riscos a la feina (Llei 31/1995)
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- 1. SALUT I TREBALL -->
+      <div class="card c-salut">
+        <h2>1. Concepte de Salut</h2>
+        <ul>
+          <li><strong>Definició OMS (1948):</strong> Estat de complet benestar físic, mental i social.</li>
+          <li><strong>Relació Treball - Salut:</strong>
+            <ul class="sub-list">
+              <li><strong>Positiu:</strong> Salari, autorealització, socialització.</li>
+              <li><strong>Negatiu:</strong> Riscos per a la salut física, psíquica i social.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 2. CONCEPTES BÀSICS -->
+      <div class="card c-basics">
+        <h2>2. Conceptes Bàsics <span class="badge">Art. 4 LPRL</span></h2>
+        <ul>
+          <li><strong>Condició de Treball:</strong> Qualsevol aspecte laboral que pugui afectar la seguretat/salut.</li>
+          <li><strong>Risc Laboral:</strong> Probabilitat que un treballador pateixi un dany derivat del treball.</li>
+          <li><strong>Dany Laboral:</strong> Malalties, patologies o lesions sofertes per la feina.</li>
+          <li><strong>Equip de Treball:</strong> Màquines, eines o instal·lacions utilitzades.</li>
+          <li><strong>EPI:</strong> Equip de Protecció Individual portat pel treballador per prevenir riscos.</li>
+        </ul>
+      </div>
+
+      <!-- 3. ESPAIS I EQUIPS -->
+      <div class="card c-espais">
+        <h2>3. Espais i Equips de Treball</h2>
+        <div class="legal-tag">RD 486/1997 - Disposicions mínimes</div>
+        <ul>
+          <li><strong>Lloc de Treball:</strong> Passadissos, escales, lavabos, vestidors, zones de descans, etc.</li>
+          <li><strong>Requisits d'Exemple:</strong>
+            <ul class="sub-list">
+              <li>Alçada de sostre: Mínim 3m (2,5m en oficines).</li>
+              <li>Baranes d'escala: Mínim 90cm d'alçada.</li>
+            </ul>
+          </li>
+          <li><strong>Danys Freqüents:</strong> Caigudes al mateix/diferent nivell, cops contra objectes.</li>
+        </ul>
+      </div>
+
+      <!-- 4. AGENTS FÍSICS -->
+      <div class="card c-fisics">
+        <h2>4. Agents Físics</h2>
+        <ul>
+          <li><strong>Soroll <span class="badge">RD 286/2006</span>:</strong>
+            <ul class="sub-list">
+              <li><em>80 dB:</em> Acció preventiva, informació i EPI.</li>
+              <li><em>85 dB:</em> Ús obligatori de protectors auditius i control mèdic.</li>
+              <li><em>87 dB:</em> Valor límit diari no superable.</li>
+            </ul>
+          </li>
+          <li><strong>Vibracions:</strong> Sistema mà-braç (eines) vs. Cos sencer (vehicles/maquinària).</li>
+          <li><strong>Radiacions:</strong> Ionitzants (molt perilloses: raigs X, gamma) i No ionitzants (menys perilloses: microones, mòbils).</li>
+          <li><strong>Temperatura i Il·luminació:</strong> Poden provocar cop de calor, deshidratació, fatiga visual o cefalees.</li>
+        </ul>
+      </div>
+
+      <!-- 5. AGENTS QUÍMICS I BIOLÒGICS -->
+      <div class="card c-quimics">
+        <h2>5. Agents Químics i Biològics</h2>
+        <ul>
+          <li><strong>Agents Químics (Sistema GHS):</strong>
+            <ul class="sub-list">
+              <li>Pictogrames: Explosiu, Inflamable, Comburent, Gasos, Tòxic, Irritant, Corrosiu, Perill per la salut, Medi ambient.</li>
+            </ul>
+          </li>
+          <li><strong>Agents Biològics (Biohazard):</strong>
+            <ul class="sub-list">
+              <li><em>Grup 1:</em> Poc probable que causi malaltia.</li>
+              <li><em>Grup 2:</em> Pot causar malaltia no greu; existeix tractament (p. ex. Grip).</li>
+              <li><em>Grup 3:</em> Malaltia greu amb risc; existeix tractament (p. ex. Hepatitis B).</li>
+              <li><em>Grup 4:</em> Malaltia greu amb alt risc i sense tractament/vacuna (p. ex. Èbola).</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 6. ERGONOMIA I PSICOSOCIALS -->
+      <div class="card c-ergonomics">
+        <h2>6. Riscos Ergonòmics i Psicosocials</h2>
+        <ul>
+          <li><strong>Càrrega Física:</strong> Esforç muscular excesiu &rarr; Trastorns musculoesquelètics (lumbàlgies, hèrnies, fatiga).</li>
+          <li><strong>Càrrega Mental:</strong> Esforç cognitiu &rarr; Estrès i fatiga mental.</li>
+          <li><strong>Patologies Psicosocials:</strong>
+            <ul class="sub-list">
+              <li><strong>Estrès:</strong> Demandes superen la capacitat d'afrontament.</li>
+              <li><strong>Burnout:</strong> Esgotament físic, emocional i mental crònic.</li>
+              <li><strong>Mobbing:</strong> Assetjament laboral / violència psicològica (aïllament, crítiques, tasques humiliants).</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <!-- 7. DANYS A LA SALUT -->
+      <div class="card c-danys" style="grid-column: 1 / -1;">
+        <h2>7. Danys a la Salut: Malaltia Professional vs. Accident de Treball</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 10px;">
+          
+          <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 4px solid #4f46e5;">
+            <strong>Malaltia Professional (MP)</strong> <span class="legal-tag">(Art. 157 LGSS)</span>
+            <p style="font-size: 0.9rem; margin-top: 5px;">Deteriorament gradual i lent de la salut per exposició continuada a agents físics, químics o biològics.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">
+              <em>RD 1299/2006 (6 Grups):</em> 1. Químics, 2. Físics, 3. Biològics, 4. Inhalació, 5. Pell, 6. Carcinògens.
+            </p>
+          </div>
+
+          <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444;">
+            <strong>Accident de Treball (AT)</strong> <span class="legal-tag">(Art. 156 LGSS)</span>
+            <p style="font-size: 0.9rem; margin-top: 5px;">Esdeveniment anormal, no volgut ni desitjat que produeix una lesió corporal immediata.</p>
+            <ul class="sub-list" style="margin-top: 5px;">
+              <li><strong>In Itinere:</strong> En el trajecte d'anada o tornada a la feina.</li>
+              <li><strong>Actes de Salvament:</strong> Salvar persones en situació de perill.</li>
+              <li><strong>Malalties Intercurrents:</strong> Complicacions derivades de l'AT.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
